@@ -1,0 +1,58 @@
+name: panda_flix
+description: A Flutter movie and TV show app using TMDB API and Firebase.
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.19.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # HTTP package for API requests to TMDB
+  http: ^1.2.2
+
+  # Firebase Core for Firebase initialization
+  firebase_core: ^3.6.0
+
+  # Firestore for storing user-generated content (e.g., reviews, watchlist)
+  cloud_firestore: ^5.4.4
+
+  # Firebase Authentication for user login (optional)
+  firebase_auth: ^5.3.1
+
+  # Provider or Riverpod for state management
+  provider: ^6.0.5
+  # or for Riverpod, uncomment the following line and remove provider above
+  # flutter_riverpod: ^2.3.3
+
+  # Cached Network Image for optimized image loading
+  cached_network_image: ^3.2.3
+
+  # Flutter Toast for showing brief notifications (updated to latest version)
+  fluttertoast: ^8.2.8
+
+  # Share for sharing content with other apps
+  share_plus: ^10.1.1
+
+  # Flutter Icons for movie and TV show icons
+  font_awesome_flutter: ^10.3.0
+
+  url_launcher: ^6.3.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+
+  # assets:
+  #   - assets/images/ # Store any local images here
+
+  # # fonts:
+  #   - family: Poppins
+  #     fonts:
+  #       - asset: assets/fonts/Poppins-Regular.ttf
+  #       - asset: assets/fonts/Poppins-Bold.ttf

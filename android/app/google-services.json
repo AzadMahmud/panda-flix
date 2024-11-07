@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "989988877327",
+    "project_id": "panda-flix-e2f69",
+    "storage_bucket": "panda-flix-e2f69.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:989988877327:android:4f379ec89aaa5d0f7e5f7a",
+        "android_client_info": {
+          "package_name": "com.example.panda_flix"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB8wWcakHAFGXAJootKLcUJAIJtjoeoUUM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
