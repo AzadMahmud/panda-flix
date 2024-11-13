@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:panda_flix/services/tmdb_api_service.dart';
+import 'package:panda_flix/providers/auth_providers.dart'; 
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class MovieDetailsScreen extends StatefulWidget {
@@ -37,24 +39,97 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
     }
   }
 
-  void _addToWatchlist() {
-    // Logic for adding to watchlist
-    print('Added to Watchlist');
+  void _addToWatchlist() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    try {
+      await authProvider.addToWatchlist(widget.id.toString(), widget.isMovie);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Added to Watchlist')));
+    } catch (e) {
+      print('Error adding to watchlist: $e');
+    }
   }
 
-  void _markAsFavorite() {
-    // Logic for marking as favorite
-    print('Marked as Favorite');
+  void _markAsFavorite() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    try {
+      await authProvider.markAsFavorite(widget.id.toString(), widget.isMovie);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Marked as Favorite')));
+    } catch (e) {
+      print('Error marking as favorite: $e');
+    }
   }
 
-  void _rateMovie() {
-    // Logic for submitting a rating
-    print('Rated Movie');
+  void _rateMovie() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    // Prompt user to input rating, for example using a dialog
+    final rating = await showDialog<double>(
+      context: context,
+      builder: (context) {
+        double tempRating = 5.0; // Default rating
+        return AlertDialog(
+          title: Text('Rate this ${widget.isMovie ? 'Movie' : 'TV Show'}'),
+          content: Slider(
+            min: 0.5,
+            max: 10,
+            divisions: 19,
+            value: tempRating,
+            onChanged: (value) {
+              setState(() {
+                tempRating = value;
+              });
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, tempRating),
+              child: Text('Submit'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (rating != null) {
+      try {
+        await authProvider.rateItem(widget.id.toString(), rating);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Rated successfully')));
+      } catch (e) {
+        print('Error rating item: $e');
+      }
+    }
   }
 
-  void _addReview() {
-    // Logic for adding a review
-    print('Review Added');
+  void _addReview() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    // Example prompt for review input
+    final review = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        TextEditingController reviewController = TextEditingController();
+        return AlertDialog(
+          title: Text('Add Review'),
+          content: TextField(
+            controller: reviewController,
+            decoration: InputDecoration(hintText: 'Write your review'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, reviewController.text),
+              child: Text('Submit'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (review != null && review.isNotEmpty) {
+      try {
+        await authProvider.addReview(widget.id.toString(), widget.isMovie, review);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Review Added')));
+      } catch (e) {
+        print('Error adding review: $e');
+      }
+    }
   }
 
   @override
@@ -105,7 +180,6 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
       ),
     );
   }
-
   Widget _buildRatingSection() {
     return Row(
       children: [
@@ -264,4 +338,6 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
       ),
     );
   }
+
+  // Add supporting methods (e.g., _buildRatingSection, _buildActionButtons) here, as defined in your code above.
 }

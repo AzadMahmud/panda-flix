@@ -1,19 +1,39 @@
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class WatchlistProvider extends ChangeNotifier {
-  final List<int> _watchlist = [];
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  List<int> get watchlist => _watchlist;
-
-  void addToWatchlist(int movieId) {
-    if (!_watchlist.contains(movieId)) {
-      _watchlist.add(movieId);
+  Future<void> addToWatchlist(int movieId) async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId != null) {
+      await _firestore.collection('users').doc(userId).update({
+        'watchlist': FieldValue.arrayUnion([movieId])
+      });
       notifyListeners();
     }
   }
 
-  void removeFromWatchlist(int movieId) {
-    _watchlist.remove(movieId);
-    notifyListeners();
+  Future<void> removeFromWatchlist(int movieId) async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId != null) {
+      await _firestore.collection('users').doc(userId).update({
+        'watchlist': FieldValue.arrayRemove([movieId])
+      });
+      notifyListeners();
+    }
+  }
+
+  // Fetch user's watchlist
+  Future<List<int>> fetchWatchlist() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId != null) {
+      final userDoc = await _firestore.collection('users').doc(userId).get();
+      return List<int>.from(userDoc['watchlist']);
+    }
+    return [];
   }
 }
+

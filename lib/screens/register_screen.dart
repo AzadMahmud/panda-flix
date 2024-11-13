@@ -22,7 +22,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       await Provider.of<AuthProvider>(context, listen: false).signUp(
         _emailController.text,
         _passwordController.text,
-        _usernameController.text,
       );
       // Navigate to the home screen after successful registration
       Navigator.pushReplacementNamed(context, '/home');

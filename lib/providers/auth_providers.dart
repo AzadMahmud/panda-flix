@@ -1,47 +1,90 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../services/auth_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AuthProvider extends ChangeNotifier {
-  final AuthService _authService = AuthService();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   User? _user;
-  String? _sessionId;
 
   User? get user => _user;
-  String? get sessionId => _sessionId;
 
   bool get isLoggedIn => _user != null;
 
-  Future<void> signUp(String email, String password, String username) async {
-    _user = await _authService.signUpWithEmail(email, password);
-    if (_user != null) {
-      _sessionId = await _authService.createTMDBSession(username, password);
-      if (_sessionId == null) {
-        throw Exception("Failed to create TMDB session");
-      }
-    }
+  Future<void> signUp(String email, String password) async {
+    final UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    _user = userCredential.user;
     notifyListeners();
   }
 
   Future<void> signIn(String email, String password) async {
-    _sessionId = await _authService.signInWithEmail(email, password);
-    _user = FirebaseAuth.instance.currentUser;
+    final UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    _user = userCredential.user;
     notifyListeners();
   }
 
   Future<void> signOut() async {
-    await _authService.signOut();
+    await _auth.signOut();
     _user = null;
-    _sessionId = null;
     notifyListeners();
   }
 
-  Future<Map<String, dynamic>?> fetchUserProfile() async {
+  Future<void> addToWatchlist(String itemId, bool isMovie) async {
     if (_user != null) {
-      return await _authService.getUserProfile(_user!.uid);
+      final type = isMovie ? 'movies' : 'tvShows';
+      await _firestore.collection('users').doc(_user!.uid).collection('watchlist').doc(itemId).set({
+        'itemId': itemId,
+        'type': type,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+      notifyListeners();
     }
-    return null;
   }
 
-  Future<void> logout() => signOut(); // Add logout alias
+  Future<void> removeFromWatchlist(String itemId) async {
+    if (_user != null) {
+      await _firestore.collection('users').doc(_user!.uid).collection('watchlist').doc(itemId).delete();
+      notifyListeners();
+    }
+  }
+
+  Future<void> markAsFavorite(String itemId, bool isMovie) async {
+    if (_user != null) {
+      final type = isMovie ? 'movies' : 'tvShows';
+      await _firestore.collection('users').doc(_user!.uid).collection('favorites').doc(itemId).set({
+        'itemId': itemId,
+        'type': type,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+      notifyListeners();
+    }
+  }
+
+  Future<void> rateItem(String itemId, double rating) async {
+    if (_user != null) {
+      await _firestore.collection('users').doc(_user!.uid).collection('ratings').doc(itemId).set({
+        'itemId': itemId,
+        'rating': rating,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+      notifyListeners();
+    }
+  }
+   Future<void> addReview(String movieId, bool isMovie, String reviewContent) async {
+    if (_user != null) {
+      await _firestore.collection('users').doc(_user!.uid).collection('reviews').add({
+        'movieId': movieId,
+        'isMovie': isMovie,
+        'reviewContent': reviewContent,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+      notifyListeners();
+    }
+  }
 }

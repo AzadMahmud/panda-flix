@@ -16,7 +16,7 @@ class HomeScreen extends StatelessWidget {
           Consumer<AuthProvider>(
             builder: (context, authProvider, _) => IconButton(
               icon: Icon(Icons.logout),
-              onPressed: authProvider.isLoggedIn ? () => authProvider.logout() : null,
+              onPressed: authProvider.isLoggedIn ? () => authProvider.signOut() : null,
             ),
           ),
         ],
