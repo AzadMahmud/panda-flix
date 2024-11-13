@@ -67,4 +67,33 @@ class TMDBApiService {
       throw Exception('Failed to load details');
     }
   }
+  
+  Future<List<dynamic>> fetchTrendingItems() async {
+    final response = await http.get(Uri.parse('$_baseUrl/trending/all/day?api_key=$_apiKey'));
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return data['results'];
+    } else {
+      throw Exception('Failed to load trending items');
+    }
+  }
+  Future<void> addToWatchlist(String sessionId, int accountId, int itemId, bool isMovie) async {
+    await http.post(
+      Uri.parse('https://api.themoviedb.org/3/account/$accountId/watchlist?api_key=$_apiKey&session_id=$sessionId'),
+      body: jsonEncode({
+        'media_type': isMovie ? 'movie' : 'tv',
+        'media_id': itemId,
+        'watchlist': true,
+      }),
+    );
+  }
+
+  Future<void> rateItem(String sessionId, int itemId, bool isMovie, double rating) async {
+    final endpoint = isMovie ? 'movie' : 'tv';
+    await http.post(
+      Uri.parse('https://api.themoviedb.org/3/$endpoint/$itemId/rating?api_key=$_apiKey&session_id=$sessionId'),
+      body: jsonEncode({'value': rating}),
+    );
+  }
+
 }

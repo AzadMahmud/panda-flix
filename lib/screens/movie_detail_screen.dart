@@ -37,6 +37,26 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
     }
   }
 
+  void _addToWatchlist() {
+    // Logic for adding to watchlist
+    print('Added to Watchlist');
+  }
+
+  void _markAsFavorite() {
+    // Logic for marking as favorite
+    print('Marked as Favorite');
+  }
+
+  void _rateMovie() {
+    // Logic for submitting a rating
+    print('Rated Movie');
+  }
+
+  void _addReview() {
+    // Logic for adding a review
+    print('Review Added');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -62,6 +82,8 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
               ),
               SizedBox(height: 8),
               _buildRatingSection(),
+              SizedBox(height: 15),
+              _buildActionButtons(), // Add action buttons here
               SizedBox(height: 15),
               _buildSectionTitle('Overview'),
               Text(
@@ -90,6 +112,38 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
         _buildTag('IMDb Rating', movieDetails!['vote_average'].toString(), Colors.amber),
         SizedBox(width: 10),
         _buildTag('Your Rating', 'N/A', Colors.blueGrey),
+      ],
+    );
+  }
+
+  Widget _buildActionButtons() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        ElevatedButton.icon(
+          onPressed: _addToWatchlist,
+          icon: Icon(Icons.bookmark),
+          label: Text('Watchlist'),
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
+        ),
+        ElevatedButton.icon(
+          onPressed: _markAsFavorite,
+          icon: Icon(Icons.favorite),
+          label: Text('Favorite'),
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+        ),
+        ElevatedButton.icon(
+          onPressed: _rateMovie,
+          icon: Icon(Icons.star),
+          label: Text('Rate'),
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.amber),
+        ),
+        ElevatedButton.icon(
+          onPressed: _addReview,
+          icon: Icon(Icons.rate_review),
+          label: Text('Review'),
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+        ),
       ],
     );
   }
