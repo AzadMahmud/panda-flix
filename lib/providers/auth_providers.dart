@@ -5,6 +5,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class AuthProvider extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+   List<Map<String, dynamic>> _favoriteMovies = [];
+
+  List<Map<String, dynamic>> get favoriteMovies => _favoriteMovies;
   User? _user;
 
   User? get user => _user;
@@ -35,17 +38,23 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> addToWatchlist(String itemId, bool isMovie) async {
-    if (_user != null) {
-      final type = isMovie ? 'movies' : 'tvShows';
-      await _firestore.collection('users').doc(_user!.uid).collection('watchlist').doc(itemId).set({
-        'itemId': itemId,
-        'type': type,
-        'timestamp': FieldValue.serverTimestamp(),
-      });
-      notifyListeners();
-    }
+  Future<void> addToWatchlist(String movieId, bool isMovie, String title, String posterPath) async {
+  if (_user != null) {
+    await _firestore
+        .collection('users')
+        .doc(_user!.uid)
+        .collection('watchlist')
+        .doc(movieId)
+        .set({
+      'movieId': movieId,
+      'isMovie': isMovie,
+      'title': title,
+      'posterPath': posterPath,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+    notifyListeners(); // Notify UI changes.
   }
+}
 
   Future<void> removeFromWatchlist(String itemId) async {
     if (_user != null) {
@@ -54,17 +63,35 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> markAsFavorite(String itemId, bool isMovie) async {
-    if (_user != null) {
-      final type = isMovie ? 'movies' : 'tvShows';
-      await _firestore.collection('users').doc(_user!.uid).collection('favorites').doc(itemId).set({
-        'itemId': itemId,
-        'type': type,
-        'timestamp': FieldValue.serverTimestamp(),
-      });
-      notifyListeners();
-    }
+   Future<void> markAsFavorite(String movieId, bool isMovie, String title, String posterPath) async {
+  if (_user != null) {
+    await _firestore
+        .collection('users')
+        .doc(_user!.uid)
+        .collection('favorites')
+        .doc(movieId)
+        .set({
+      'movieId': movieId,
+      'isMovie': isMovie,
+      'title': title,
+      'posterPath': posterPath,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+    notifyListeners(); // Notify UI changes.
   }
+}
+Future<void> removeFromFavorites(String movieId) async {
+  if (_user != null) {
+    await _firestore
+        .collection('users')
+        .doc(_user!.uid)
+        .collection('favorites')
+        .doc(movieId)
+        .delete();
+    notifyListeners();
+  }
+}
+
 
   Future<void> rateItem(String itemId, double rating) async {
     if (_user != null) {
@@ -87,4 +114,36 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+ Stream<List<Map<String, dynamic>>> getWatchlist() {
+  if (_user == null) return Stream.value([]);
+  return _firestore
+      .collection('users')
+      .doc(_user!.uid)
+      .collection('watchlist')
+      .orderBy('timestamp', descending: true)
+      .snapshots()
+      .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
+}
+Stream<List<Map<String, dynamic>>> getFavorites() {
+  if (_user == null) return Stream.value([]);
+  return _firestore
+      .collection('users')
+      .doc(_user!.uid)
+      .collection('favorites')
+      .orderBy('timestamp', descending: true)
+      .snapshots()
+      .map((snapshot) {
+        return snapshot.docs.map((doc) {
+          final data = doc.data();
+          return {
+            'movieId': data['movieId'],
+            'isMovie': data['isMovie'],
+            'title': data['title'],
+            'posterPath': data['posterPath'],
+          };
+        }).toList();
+      });
+}
+
+
 }

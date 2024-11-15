@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:panda_flix/screens/home_screen.dart';
 import 'package:panda_flix/screens/login_screen.dart';
 import 'package:panda_flix/screens/register_screen.dart';
+import 'package:panda_flix/screens/favorites_screen.dart';
+import 'package:panda_flix/screens/watchlist_screen.dart';
 import 'package:panda_flix/providers/auth_providers.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -11,7 +13,7 @@ void main() async {
   await Firebase.initializeApp();
   runApp(MyApp());
 }
-  
+
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -21,22 +23,13 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        home: FutureBuilder(
-          future: Firebase.initializeApp(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(child: CircularProgressIndicator());
-            }
-            if (snapshot.hasError) {
-              return Center(child: Text("Error initializing Firebase"));
-            }
-            return AuthWrapper();
-          },
-        ),
+        home: AuthWrapper(),
         routes: {
           '/login': (context) => LoginScreen(),
           '/register': (context) => RegisterScreen(),
           '/home': (context) => HomeScreen(),
+          '/favorites': (context) => FavoritesScreen(),
+          '/watchlist': (context) => WatchlistScreen(),
         },
       ),
     );
@@ -47,6 +40,8 @@ class AuthWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
+
+    // Show HomeScreen if the user is logged in, else LoginScreen
     return authProvider.isLoggedIn ? HomeScreen() : LoginScreen();
   }
 }

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:panda_flix/screens/login_screen.dart';
 import 'package:panda_flix/screens/movie_detail_screen.dart';
 import 'package:panda_flix/services/tmdb_api_service.dart';
 import 'package:provider/provider.dart';
 import 'package:panda_flix/providers/auth_providers.dart';
+import 'package:panda_flix/screens/favorites_screen.dart';
+import 'package:panda_flix/screens/watchlist_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final TMDBApiService _tmdbApiService = TMDBApiService();
@@ -11,16 +14,55 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Panda-Flix'),
-        actions: [
-          Consumer<AuthProvider>(
-            builder: (context, authProvider, _) => IconButton(
-              icon: Icon(Icons.logout),
-              onPressed: authProvider.isLoggedIn ? () => authProvider.signOut() : null,
+  title: Text('Panda-Flix'),
+  actions: [
+    Consumer<AuthProvider>(
+      builder: (context, authProvider, _) {
+        return PopupMenuButton<String>(
+          icon: Icon(Icons.account_circle),
+          onSelected: (value) async {
+            switch (value) {
+              case 'favorites':
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => FavoritesScreen()),
+                );
+                break;
+              case 'watchlist':
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => WatchlistScreen()),
+                );
+                break;
+              case 'signout':
+                await authProvider.signOut(); // Call the sign-out method.
+                  Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => LoginScreen()),
+                  );
+              break;
+            }
+          },
+          itemBuilder: (context) => [
+            PopupMenuItem(
+              value: 'favorites',
+              child: Text('Favorites'),
             ),
-          ),
-        ],
-      ),
+            PopupMenuItem(
+              value: 'watchlist',
+              child: Text('Watchlist'),
+            ),
+            PopupMenuItem(
+              value: 'signout',
+              child: Text('Sign Out'),
+            ),
+          ],
+        );
+      },
+    ),
+  ],
+),
+
       body: ListView(
         children: [
           _buildTrendingCarousel(),

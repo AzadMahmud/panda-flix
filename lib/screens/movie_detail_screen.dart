@@ -40,25 +40,34 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
   }
 
   void _addToWatchlist() async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    try {
-      await authProvider.addToWatchlist(widget.id.toString(), widget.isMovie);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Added to Watchlist')));
-    } catch (e) {
-      print('Error adding to watchlist: $e');
-    }
+  final authProvider = Provider.of<AuthProvider>(context, listen: false);
+  try {
+    await authProvider.addToWatchlist(
+      widget.id.toString(),
+      widget.isMovie,
+      movieDetails!['title'] ?? movieDetails!['name'],
+      movieDetails!['poster_path'] ?? '',
+    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Added to Watchlist')));
+  } catch (e) {
+    print('Error adding to watchlist: $e');
   }
+}
 
-  void _markAsFavorite() async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    try {
-      await authProvider.markAsFavorite(widget.id.toString(), widget.isMovie);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Marked as Favorite')));
-    } catch (e) {
-      print('Error marking as favorite: $e');
-    }
+ void _markAsFavorite() async {
+  final authProvider = Provider.of<AuthProvider>(context, listen: false);
+  try {
+    await authProvider.markAsFavorite(
+      widget.id.toString(),
+      widget.isMovie,
+      movieDetails!['title'] ?? movieDetails!['name'],
+      movieDetails!['poster_path'] ?? '',
+    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Marked as Favorite')));
+  } catch (e) {
+    print('Error marking as favorite: $e');
   }
-
+}
   void _rateMovie() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     // Prompt user to input rating, for example using a dialog

@@ -1,7 +1,7 @@
 // lib/screens/profile_screen.dart
 import 'package:flutter/material.dart';
-import 'package:panda_flix/screens/watchlist.dart';
-import 'package:panda_flix/screens/favorites.dart';
+import 'package:panda_flix/screens/watchlist_screen.dart';
+import 'package:panda_flix/screens/favorites_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   @override
