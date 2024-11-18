@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:panda_flix/services/tmdb_api_service.dart';
-import 'package:panda_flix/providers/auth_providers.dart'; 
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:panda_flix/services/tmdb_api_service.dart';
+import 'package:panda_flix/providers/auth_providers.dart'; 
 
 class MovieDetailsScreen extends StatefulWidget {
   final int id;
@@ -53,8 +53,7 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
     print('Error adding to watchlist: $e');
   }
 }
-
- void _markAsFavorite() async {
+void _markAsFavorite() async {
   final authProvider = Provider.of<AuthProvider>(context, listen: false);
   try {
     await authProvider.markAsFavorite(
@@ -141,7 +140,8 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
     }
   }
 
-  @override
+
+ @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[900],
@@ -149,147 +149,190 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
         title: Text(widget.isMovie ? 'Movie Details' : 'TV Show Details'),
         backgroundColor: Colors.black,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: ListView(
-          children: [
-            if (movieDetails != null) ...[
-              Image.network(
-                'https://image.tmdb.org/t/p/w500${movieDetails!['poster_path']}',
-                height: 300,
-                fit: BoxFit.cover,
-              ),
-              SizedBox(height: 15),
-              Text(
-                movieDetails!['title'] ?? movieDetails!['name'],
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
-              ),
-              SizedBox(height: 8),
-              _buildRatingSection(),
-              SizedBox(height: 15),
-              _buildActionButtons(), // Add action buttons here
-              SizedBox(height: 15),
-              _buildSectionTitle('Overview'),
-              Text(
-                movieDetails!['overview'] ?? 'No overview available.',
-                style: TextStyle(fontSize: 16, color: Colors.grey[300]),
-              ),
-            ],
-            Divider(color: Colors.grey[700], thickness: 0.5),
-            _buildSectionTitle('Reviews'),
-            ...reviews.map((review) => _buildReviewCard(review)).toList(),
-            Divider(color: Colors.grey[700], thickness: 0.5),
-            _buildSectionTitle('Trailer'),
-            _buildTrailer(videos),
-            Divider(color: Colors.grey[700], thickness: 0.5),
-            _buildSectionTitle('More Like This'),
-            _buildSimilarItemsSection(),
-          ],
-        ),
-      ),
-    );
-  }
-  Widget _buildRatingSection() {
-    return Row(
-      children: [
-        _buildTag('IMDb Rating', movieDetails!['vote_average'].toString(), Colors.amber),
-        SizedBox(width: 10),
-        _buildTag('Your Rating', 'N/A', Colors.blueGrey),
-      ],
+      body: movieDetails == null
+          ? Center(child: CircularProgressIndicator())
+          : CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Movie Poster
+                        AspectRatio(
+                          aspectRatio: 2/3,
+                          child: Image.network(
+                            'https://image.tmdb.org/t/p/w500${movieDetails!['poster_path']}',
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                       
+
+                        SizedBox(height: 15),
+
+                        // Movie Title
+                        Text(
+                          movieDetails!['title'] ?? movieDetails!['name'],
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white
+                          ),
+                        ),
+                        SizedBox(height: 6),
+
+                        // Release Date
+                        Text(
+                          'Release Date: ${movieDetails!['release_date'] ?? movieDetails!['first_air_date']}',
+                          style: TextStyle(fontSize: 16, color: Colors.grey[300]),
+                        ),
+                        SizedBox(height: 10),
+
+                        // Rating Section
+                        _buildRatingSection(),
+                        SizedBox(height: 15),
+
+                        // Action Buttons
+                        _buildActionButtons(),
+
+                        // Overview Section
+                        SizedBox(height: 20),
+                        _buildSectionTitle('Overview'),
+                        Text(
+                          movieDetails!['overview'] ?? 'No overview available.',
+                          style: TextStyle(fontSize: 16, color: Colors.grey[300]),
+                        ),
+                        SizedBox(height: 20),
+
+                        // Reviews Section
+                        _buildSectionTitle('Reviews'),
+                        SizedBox(height: 8),
+                        SizedBox(
+                          height: 150,
+                          child: _buildHorizontalReviewList(),
+                        ),
+
+                        // Trailer Section
+                        Divider(color: Colors.grey[700], thickness: 0.5),
+                        _buildSectionTitle('Trailer'),
+                        _buildTrailer(videos),
+
+                        // Similar Items Section
+                        Divider(color: Colors.grey[700], thickness: 0.5),
+                        _buildSectionTitle('More Like This'),
+                        SizedBox(height: 8),
+                      ],
+                    ),
+                  ),
+                ),
+                // Similar Items as a separate sliver
+                SliverPadding(
+                  padding: EdgeInsets.fromLTRB(8.0, 0, 8.0, 16.0),
+                  sliver: SliverToBoxAdapter(
+                    child: SizedBox(
+                      height: 220, // Increased height to accommodate title
+                      child: _buildSimilarItemsSection(),
+                    ),
+                  ),
+                ),
+              ],
+            ),
     );
   }
 
   Widget _buildActionButtons() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
+  return SingleChildScrollView(
+    scrollDirection: Axis.horizontal,
+    child: Row(
       children: [
         ElevatedButton.icon(
-          onPressed: _addToWatchlist,
-          icon: Icon(Icons.bookmark),
+          onPressed: _addToWatchlist, // Add watchlist logic
+          icon: Icon(Icons.bookmark, size: 18),
           label: Text('Watchlist'),
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.teal,
+            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            textStyle: TextStyle(fontSize: 14),
+          ),
         ),
+        SizedBox(width: 10),
         ElevatedButton.icon(
-          onPressed: _markAsFavorite,
-          icon: Icon(Icons.favorite),
+          onPressed: _markAsFavorite, // Add favorite logic
+          icon: Icon(Icons.favorite, size: 18),
           label: Text('Favorite'),
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.redAccent,
+            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            textStyle: TextStyle(fontSize: 14),
+          ),
         ),
+        SizedBox(width: 10),
         ElevatedButton.icon(
-          onPressed: _rateMovie,
-          icon: Icon(Icons.star),
+          onPressed: _rateMovie, // Add rating logic
+          icon: Icon(Icons.star, size: 18),
           label: Text('Rate'),
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.amber),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.amber,
+            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            textStyle: TextStyle(fontSize: 14),
+          ),
         ),
+        SizedBox(width: 10),
         ElevatedButton.icon(
-          onPressed: _addReview,
-          icon: Icon(Icons.rate_review),
+          onPressed: _addReview, // Add review logic
+          icon: Icon(Icons.rate_review, size: 18),
           label: Text('Review'),
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.blue,
+            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            textStyle: TextStyle(fontSize: 14),
+          ),
         ),
       ],
-    );
-  }
+    ),
+  );
+}
 
-  Widget _buildTag(String label, String value, Color color) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Row(
-        children: [
-          Text(
-            '$label: ',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-          ),
-          Text(
-            value,
-            style: TextStyle(color: Colors.white),
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Text(
-        title,
-        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.amberAccent),
-      ),
-    );
-  }
-
-  Widget _buildReviewCard(dynamic review) {
-    return Card(
-      color: Colors.grey[850],
-      margin: const EdgeInsets.symmetric(vertical: 5),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              review['author'] ?? 'Anonymous',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.amber),
+  Widget _buildHorizontalReviewList() {
+    return reviews.isNotEmpty
+        ? SizedBox(
+            height: 150,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: reviews.length,
+              itemBuilder: (context, index) {
+                final review = reviews[index];
+                return Container(
+                  width: 250,
+                  margin: EdgeInsets.only(right: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[850],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  padding: EdgeInsets.all(10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        review['author'] ?? 'Anonymous',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.amber),
+                      ),
+                      SizedBox(height: 5),
+                      Text(
+                        review['content'] ?? 'No content available.',
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: Colors.grey[300]),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
-            SizedBox(height: 5),
-            Text(
-              'Rating: ${review['author_details']['rating'] ?? 'N/A'}',
-              style: TextStyle(color: Colors.grey[400]),
-            ),
-            SizedBox(height: 5),
-            Text(
-              review['content'] ?? 'No review content available.',
-              style: TextStyle(color: Colors.grey[300]),
-            ),
-          ],
-        ),
-      ),
-    );
+          )
+        : Text('No reviews available.', style: TextStyle(color: Colors.grey[400]));
   }
 
   Widget _buildTrailer(List<dynamic> videos) {
@@ -316,37 +359,79 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
         : Text('No trailer available', style: TextStyle(color: Colors.grey[300]));
   }
 
-  Widget _buildSimilarItemsSection() {
-    return SizedBox(
-      height: 200,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: similarItems.length,
-        itemBuilder: (context, index) {
-          final similar = similarItems[index];
-          return Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: Column(
-              children: [
-                Image.network(
+ Widget _buildSimilarItemsSection() {
+    return ListView.builder(
+      scrollDirection: Axis.horizontal,
+      itemCount: similarItems.length,
+      itemBuilder: (context, index) {
+        final similar = similarItems[index];
+        return Container(
+          width: 120, // Fixed width for consistency
+          margin: EdgeInsets.only(right: 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.network(
                   'https://image.tmdb.org/t/p/w200${similar['poster_path']}',
-                  width: 100,
-                  height: 150,
+                  width: 120,
+                  height: 180,
                   fit: BoxFit.cover,
                 ),
-                SizedBox(height: 5),
-                Text(
-                  similar['title'] ?? similar['name'],
-                  style: TextStyle(fontSize: 14, color: Colors.grey[300]),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          );
-        },
+              ),
+              SizedBox(height: 5),
+              Text(
+                similar['title'] ?? similar['name'],
+                style: TextStyle(fontSize: 14, color: Colors.grey[300]),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Text(
+        title,
+        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.amberAccent),
+      ),
+    );
+  }
+   Widget _buildRatingSection() {
+    return Row(
+      children: [
+        _buildTag('IMDb Rating', movieDetails!['vote_average'].toString(), Colors.amber),
+        SizedBox(width: 10),
+        _buildTag('Your Rating', 'N/A', Colors.blueGrey),
+      ],
+    );
+  }
+   Widget _buildTag(String label, String value, Color color) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Row(
+        children: [
+          Text(
+            '$label: ',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          Text(
+            value,
+            style: TextStyle(color: Colors.white),
+          ),
+        ],
       ),
     );
   }
 
-  // Add supporting methods (e.g., _buildRatingSection, _buildActionButtons) here, as defined in your code above.
 }
