@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:panda_flix/screens/review_page.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:panda_flix/services/tmdb_api_service.dart';
@@ -25,7 +27,10 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
   void initState() {
     super.initState();
     fetchDetails();
+    fetchUserRating();
+    fetchUserReview();
   }
+String? userReview;
 
   Future<void> fetchDetails() async {
     try {
@@ -38,7 +43,30 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
       print('Error fetching details: $e');
     }
   }
+  double? userRating;
 
+Future<void> fetchUserRating() async {
+  final authProvider = Provider.of<AuthProvider>(context, listen: false);
+  try {
+    final rating = await authProvider.fetchUserRating(widget.id.toString());
+    setState(() {
+      userRating = rating; // Set the user's rating if it exists
+    });
+  } catch (e) {
+    print('Error fetching user rating: $e');
+  }
+}
+Future<void> fetchUserReview() async {
+  final authProvider = Provider.of<AuthProvider>(context, listen: false);
+  try {
+    final review = await authProvider.fetchUserReview(widget.id.toString());
+    setState(() {
+      userReview = review;
+    });
+  } catch (e) {
+    print('Error fetching user review: $e');
+  }
+}
   void _addToWatchlist() async {
   final authProvider = Provider.of<AuthProvider>(context, listen: false);
   try {
@@ -67,78 +95,120 @@ void _markAsFavorite() async {
     print('Error marking as favorite: $e');
   }
 }
-  void _rateMovie() async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    // Prompt user to input rating, for example using a dialog
-    final rating = await showDialog<double>(
-      context: context,
-      builder: (context) {
-        double tempRating = 5.0; // Default rating
-        return AlertDialog(
-          title: Text('Rate this ${widget.isMovie ? 'Movie' : 'TV Show'}'),
-          content: Slider(
-            min: 0.5,
-            max: 10,
-            divisions: 19,
-            value: tempRating,
-            onChanged: (value) {
-              setState(() {
-                tempRating = value;
-              });
-            },
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, tempRating),
-              child: Text('Submit'),
-            ),
-          ],
-        );
-      },
-    );
 
-    if (rating != null) {
-      try {
-        await authProvider.rateItem(widget.id.toString(), rating);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Rated successfully')));
-      } catch (e) {
-        print('Error rating item: $e');
-      }
+void _rateMovie() async {
+  final authProvider = Provider.of<AuthProvider>(context, listen: false);
+  double tempRating = userRating ?? 5.0; // Default or current rating
+
+  final rating = await showDialog<double>(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.0),
+        ),
+        title: Text(
+          'Rate this ${widget.isMovie ? 'Movie' : 'TV Show'}',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: StatefulBuilder(
+          builder: (context, setState) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'How would you rate this?',
+                  style: TextStyle(fontSize: 16.0),
+                ),
+                SizedBox(height: 16.0),
+                RatingBar.builder(
+                  initialRating: tempRating,
+                  minRating: 1,
+                  direction: Axis.horizontal,
+                  allowHalfRating: true,
+                  itemCount: 10,
+                  itemPadding: EdgeInsets.symmetric(horizontal: 4.0),
+                  itemBuilder: (context, _) => Icon(
+                    Icons.star,
+                    color: Colors.amber,
+                  ),
+                  onRatingUpdate: (value) {
+                    setState(() {
+                      tempRating = value; // Update temporary rating
+                    });
+                  },
+                ),
+                SizedBox(height: 8.0),
+                Text(
+                  '${tempRating.toStringAsFixed(1)}/10',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, null),
+            child: Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, tempRating),
+            child: Text('Submit'),
+          ),
+        ],
+      );
+    },
+  );
+
+  if (rating != null) {
+    try {
+      await authProvider.rateItem(widget.id.toString(), rating, widget.isMovie);
+
+      setState(() {
+        userRating = rating; // Update local state
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Rated successfully')),
+      );
+    } catch (e) {
+      print('Error rating item: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to rate item')),
+      );
     }
   }
+}
 
-  void _addReview() async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    // Example prompt for review input
-    final review = await showDialog<String>(
-      context: context,
-      builder: (context) {
-        TextEditingController reviewController = TextEditingController();
-        return AlertDialog(
-          title: Text('Add Review'),
-          content: TextField(
-            controller: reviewController,
-            decoration: InputDecoration(hintText: 'Write your review'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, reviewController.text),
-              child: Text('Submit'),
-            ),
-          ],
-        );
-      },
-    );
 
-    if (review != null && review.isNotEmpty) {
-      try {
-        await authProvider.addReview(widget.id.toString(), widget.isMovie, review);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Review Added')));
-      } catch (e) {
-        print('Error adding review: $e');
-      }
+ void _addReview() async {
+  final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+  final review = await Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => ReviewPage(
+        movieTitle: movieDetails!['title'] ?? movieDetails!['name'],
+      ),
+    ),
+  );
+
+  if (review != null && review.isNotEmpty) {
+    try {
+      await authProvider.addReview(widget.id.toString(), widget.isMovie, review);
+      fetchUserReview(); // Refresh user review
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Review added successfully')));
+    } catch (e) {
+      print('Error adding review: $e');
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to add review')));
     }
   }
+}
+
 
 
  @override
@@ -212,7 +282,10 @@ void _markAsFavorite() async {
                           height: 150,
                           child: _buildHorizontalReviewList(),
                         ),
-
+                       
+                        _buildReviewSection(),
+                        SizedBox(height: 20),
+                        
                         // Trailer Section
                         Divider(color: Colors.grey[700], thickness: 0.5),
                         _buildSectionTitle('Trailer'),
@@ -404,14 +477,44 @@ void _markAsFavorite() async {
     );
   }
    Widget _buildRatingSection() {
-    return Row(
-      children: [
-        _buildTag('IMDb Rating', movieDetails!['vote_average'].toString(), Colors.amber),
-        SizedBox(width: 10),
-        _buildTag('Your Rating', 'N/A', Colors.blueGrey),
-      ],
-    );
-  }
+  return Row(
+    children: [
+      _buildTag('IMDb Rating', movieDetails!['vote_average'].toString(), Colors.amber),
+      SizedBox(width: 10),
+      _buildTag(
+        'Your Rating',
+        userRating != null ? '${userRating!.toStringAsFixed(1)}/10' : 'N/A',
+        Colors.blueGrey,
+      ),
+    ],
+  );
+}
+Widget _buildReviewSection() {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _buildSectionTitle('Your Review'),
+      userReview != null
+          ? Container(
+              padding: EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.grey[850],
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                userReview!,
+                style: TextStyle(color: Colors.white),
+              ),
+            )
+          : Text(
+              "You haven't reviewed this ${widget.isMovie ? 'movie' : 'TV show'} yet.",
+              style: TextStyle(color: Colors.grey[400]),
+            ),
+      SizedBox(height: 20),
+    ],
+  );
+}
+
    Widget _buildTag(String label, String value, Color color) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),

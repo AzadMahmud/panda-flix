@@ -93,27 +93,79 @@ Future<void> removeFromFavorites(String movieId) async {
 }
 
 
-  Future<void> rateItem(String itemId, double rating) async {
-    if (_user != null) {
-      await _firestore.collection('users').doc(_user!.uid).collection('ratings').doc(itemId).set({
-        'itemId': itemId,
-        'rating': rating,
-        'timestamp': FieldValue.serverTimestamp(),
-      });
-      notifyListeners();
+ Future<void> rateItem(String id, double rating, bool isMovie) async {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) throw Exception('User not logged in');
+  
+  final doc = FirebaseFirestore.instance
+      .collection('users')
+      .doc(user.uid)
+      .collection('ratings')
+      .doc(id);
+
+  await doc.set({
+    'id': id,
+    'rating': rating,
+    'isMovie': isMovie, // Use the parameter here
+    'timestamp': FieldValue.serverTimestamp(),
+  });
+}
+
+Future<double?> fetchUserRating(String id) async {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) return null;
+
+  final doc = await FirebaseFirestore.instance
+      .collection('users')
+      .doc(user.uid)
+      .collection('ratings')
+      .doc(id)
+      .get();
+
+  return doc.exists ? (doc['rating'] as double) : null;
+}
+
+Future<void> addReview(String id, bool isMovie, String review) async {
+  final user = FirebaseAuth.instance.currentUser;
+
+  if (user == null) throw Exception('User not logged in');
+
+  final collection = FirebaseFirestore.instance
+      .collection('users')
+      .doc(user.uid)
+      .collection('reviews');
+
+  await collection.doc(id).set({
+    'id': id,
+    'isMovie': isMovie,
+    'review': review,
+    'timestamp': FieldValue.serverTimestamp(),
+  });
+}
+
+Future<String?> fetchUserReview(String id) async {
+  final user = FirebaseAuth.instance.currentUser;
+
+  if (user == null) return null;
+
+  final doc = await FirebaseFirestore.instance
+      .collection('users')
+      .doc(user.uid)
+      .collection('reviews')
+      .doc(id)
+      .get();
+
+  if (doc.exists) {
+    final data = doc.data(); // Fetch the document data
+    if (data != null && data.containsKey('review')) {
+      return data['review'] as String?;
     }
   }
-   Future<void> addReview(String movieId, bool isMovie, String reviewContent) async {
-    if (_user != null) {
-      await _firestore.collection('users').doc(_user!.uid).collection('reviews').add({
-        'movieId': movieId,
-        'isMovie': isMovie,
-        'reviewContent': reviewContent,
-        'timestamp': FieldValue.serverTimestamp(),
-      });
-      notifyListeners();
-    }
-  }
+
+  return null; // Return null if no review exists
+}
+
+
  Stream<List<Map<String, dynamic>>> getWatchlist() {
   if (_user == null) return Stream.value([]);
   return _firestore
