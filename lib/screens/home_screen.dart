@@ -16,6 +16,12 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
   title: Text('Panda-Flix'),
   actions: [
+    IconButton(
+            icon: Icon(Icons.search),
+            onPressed: () {
+              Navigator.pushNamed(context, '/search');
+            },
+          ),
     Consumer<AuthProvider>(
       builder: (context, authProvider, _) {
         return PopupMenuButton<String>(
