@@ -217,7 +217,7 @@ void _rateMovie() async {
       backgroundColor: Colors.grey[900],
       appBar: AppBar(
         title: Text(widget.isMovie ? 'Movie Details' : 'TV Show Details'),
-        backgroundColor: Colors.black,
+        backgroundColor: const Color.fromARGB(255, 77, 75, 75),
       ),
       body: movieDetails == null
           ? Center(child: CircularProgressIndicator())
@@ -433,12 +433,24 @@ void _rateMovie() async {
   }
 
  Widget _buildSimilarItemsSection() {
-    return ListView.builder(
-      scrollDirection: Axis.horizontal,
-      itemCount: similarItems.length,
-      itemBuilder: (context, index) {
-        final similar = similarItems[index];
-        return Container(
+  return ListView.builder(
+    scrollDirection: Axis.horizontal,
+    itemCount: similarItems.length,
+    itemBuilder: (context, index) {
+      final similar = similarItems[index];
+      return GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => MovieDetailsScreen(
+                id: similar['id'],
+                isMovie: similar['media_type'] == 'movie',
+              ),
+            ),
+          );
+        },
+        child: Container(
           width: 120, // Fixed width for consistency
           margin: EdgeInsets.only(right: 10),
           child: Column(
@@ -462,10 +474,11 @@ void _rateMovie() async {
               ),
             ],
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
 
   Widget _buildSectionTitle(String title) {
     return Padding(

@@ -10,66 +10,78 @@ import 'package:panda_flix/screens/watchlist_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final TMDBApiService _tmdbApiService = TMDBApiService();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       appBar: AppBar(
-  title: Text('Panda-Flix'),
-  actions: [
-    IconButton(
-            icon: Icon(Icons.search),
+        backgroundColor: Colors.black,
+        title: Text(
+          'PandaFlix', 
+          style: TextStyle(
+            color: Colors.red, 
+            fontWeight: FontWeight.bold,
+            fontSize: 24,
+          ),
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.search, color: Colors.white),
             onPressed: () {
               Navigator.pushNamed(context, '/search');
             },
           ),
-    Consumer<AuthProvider>(
-      builder: (context, authProvider, _) {
-        return PopupMenuButton<String>(
-          icon: Icon(Icons.account_circle),
-          onSelected: (value) async {
-            switch (value) {
-              case 'favorites':
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => FavoritesScreen()),
-                );
-                break;
-              case 'watchlist':
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => WatchlistScreen()),
-                );
-                break;
-              case 'signout':
-                await authProvider.signOut(); // Call the sign-out method.
-                  Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => LoginScreen()),
-                  );
-              break;
-            }
-          },
-          itemBuilder: (context) => [
-            PopupMenuItem(
-              value: 'favorites',
-              child: Text('Favorites'),
-            ),
-            PopupMenuItem(
-              value: 'watchlist',
-              child: Text('Watchlist'),
-            ),
-            PopupMenuItem(
-              value: 'signout',
-              child: Text('Sign Out'),
-            ),
-          ],
-        );
-      },
-    ),
-  ],
-),
-
+          Consumer<AuthProvider>(
+            builder: (context, authProvider, _) {
+              return PopupMenuButton<String>(
+                icon: Icon(Icons.account_circle, color: Colors.white),
+                color: Colors.grey[900],
+                onSelected: (value) async {
+                  switch (value) {
+                    case 'favorites':
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => FavoritesScreen()),
+                      );
+                      break;
+                    case 'watchlist':
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => WatchlistScreen()),
+                      );
+                      break;
+                    case 'signout':
+                      await authProvider.signOut();
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => LoginScreen()),
+                      );
+                      break;
+                  }
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 'favorites',
+                    child: Text('Favorites', style: TextStyle(color: Colors.white)),
+                  ),
+                  PopupMenuItem(
+                    value: 'watchlist',
+                    child: Text('Watchlist', style: TextStyle(color: Colors.white)),
+                  ),
+                  PopupMenuItem(
+                    value: 'signout',
+                    child: Text('Sign Out', style: TextStyle(color: Colors.white)),
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
+        elevation: 0,
+      ),
       body: ListView(
+        padding: EdgeInsets.zero,
         children: [
           _buildTrendingCarousel(),
           _buildCategorySection(context, 'Popular Movies', fetchPopularMovies: true),
@@ -87,11 +99,25 @@ class HomeScreen extends StatelessWidget {
       future: _tmdbApiService.fetchTrendingItems(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
+            ),
+          );
         } else if (snapshot.hasError) {
-          return Center(child: Text('Error loading trending items'));
+          return Center(
+            child: Text(
+              'Error loading trending items', 
+              style: TextStyle(color: Colors.white),
+            ),
+          );
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return Center(child: Text('No trending items available'));
+          return Center(
+            child: Text(
+              'No trending items available', 
+              style: TextStyle(color: Colors.white),
+            ),
+          );
         }
 
         final trendingItems = snapshot.data!;
@@ -101,6 +127,7 @@ class HomeScreen extends StatelessWidget {
             autoPlay: true,
             enlargeCenterPage: true,
             aspectRatio: 16 / 9,
+            viewportFraction: 0.9,
           ),
           items: trendingItems.map((item) {
             return GestureDetector(
@@ -115,30 +142,54 @@ class HomeScreen extends StatelessWidget {
                   ),
                 );
               },
-              child: Stack(
-                alignment: Alignment.bottomLeft,
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10.0),
-                    child: Image.network(
-                      'https://image.tmdb.org/t/p/w500${item['backdrop_path']}',
-                      width: MediaQuery.of(context).size.width,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(10.0),
-                    child: Text(
-                      item['title'] ?? item['name'] ?? '',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        shadows: [Shadow(blurRadius: 10, color: Colors.black)],
+              child: Container(
+                margin: EdgeInsets.symmetric(horizontal: 5),
+                child: Stack(
+                  alignment: Alignment.bottomLeft,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(15.0),
+                      child: Image.network(
+                        'https://image.tmdb.org/t/p/w500${item['backdrop_path']}',
+                        width: MediaQuery.of(context).size.width,
+                        fit: BoxFit.cover,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Center(
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
+                            ),
+                          );
+                        },
                       ),
                     ),
-                  ),
-                ],
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withOpacity(0.7),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(15.0),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Text(
+                        item['title'] ?? item['name'] ?? '',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          shadows: [Shadow(blurRadius: 10, color: Colors.black)],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           }).toList(),
@@ -147,20 +198,24 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // Category Section Widget (Your original code)
+  // Category Section Widget
   Widget _buildCategorySection(BuildContext context, String title, {bool fetchPopularMovies = false, bool fetchTopRatedMovies = false, bool fetchPopularTVShows = false, bool fetchTopRatedTVShows = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.all(12.0),
           child: Text(
             title,
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 22, 
+              fontWeight: FontWeight.bold, 
+              color: Colors.white
+            ),
           ),
         ),
         SizedBox(
-          height: 200,
+          height: 250,
           child: FutureBuilder<List<dynamic>>(
             future: fetchPopularMovies
                 ? _tmdbApiService.fetchPopularMovies()
@@ -171,11 +226,25 @@ class HomeScreen extends StatelessWidget {
                         : _tmdbApiService.fetchTopRatedTVShows(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(child: CircularProgressIndicator());
+                return Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
+                  ),
+                );
               } else if (snapshot.hasError) {
-                return Center(child: Text('Error loading $title'));
+                return Center(
+                  child: Text(
+                    'Error loading $title', 
+                    style: TextStyle(color: Colors.white),
+                  ),
+                );
               } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return Center(child: Text('No $title available'));
+                return Center(
+                  child: Text(
+                    'No $title available', 
+                    style: TextStyle(color: Colors.white),
+                  ),
+                );
               }
 
               final items = snapshot.data!;
@@ -199,21 +268,38 @@ class HomeScreen extends StatelessWidget {
                         ),
                       );
                     },
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
+                    child: Container(
+                      width: 150,
+                      margin: EdgeInsets.symmetric(horizontal: 8),
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Image.network(
-                            'https://image.tmdb.org/t/p/w200${item['poster_path']}',
-                            width: 100,
-                            height: 150,
-                            fit: BoxFit.cover,
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.network(
+                              'https://image.tmdb.org/t/p/w200${item['poster_path']}',
+                              width: 150,
+                              height: 200,
+                              fit: BoxFit.cover,
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Center(
+                                  child: CircularProgressIndicator(
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
+                                  ),
+                                );
+                              },
+                            ),
                           ),
-                          SizedBox(height: 5),
+                          SizedBox(height: 8),
                           Text(
                             item['title'] ?? item['name'],
-                            style: TextStyle(fontSize: 14),
-                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 14, 
+                              color: Colors.white,
+                              overflow: TextOverflow.ellipsis
+                            ),
+                            maxLines: 1,
                           ),
                         ],
                       ),
@@ -228,4 +314,3 @@ class HomeScreen extends StatelessWidget {
     );
   }
 }
-  
