@@ -28,7 +28,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Registration failed: ${e.toString()}"),
+          content: Text("Registration failed: Invalid credentials"),
           backgroundColor: Colors.red,
         ),
       );
@@ -153,7 +153,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     : ElevatedButton(
                         onPressed: _register,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
+                          backgroundColor: const Color.fromARGB(255, 241, 66, 53),
                           padding: EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
@@ -164,6 +164,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
+                            color: Color.fromARGB(255, 245, 241, 241)
                           ),
                         ),
                       ),

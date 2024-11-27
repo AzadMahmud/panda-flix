@@ -27,7 +27,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Login failed: ${e.toString()}"),
+          content: Text("Login failed: Invalid email or password"),
           backgroundColor: Colors.red,
         ),
       );
@@ -145,6 +145,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
+                            color: Color.fromARGB(255, 245, 241, 241)
                           ),
                         ),
                       ),

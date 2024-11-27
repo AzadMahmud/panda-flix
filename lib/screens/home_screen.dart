@@ -84,10 +84,12 @@ class HomeScreen extends StatelessWidget {
         padding: EdgeInsets.zero,
         children: [
           _buildTrendingCarousel(),
-          _buildCategorySection(context, 'Popular Movies', fetchPopularMovies: true),
-          _buildCategorySection(context, 'Top Rated Movies', fetchTopRatedMovies: true),
-          _buildCategorySection(context, 'Popular TV Shows', fetchPopularTVShows: true),
-          _buildCategorySection(context, 'Top Rated TV Shows', fetchTopRatedTVShows: true),
+        _buildCategorySection(context, 'Popular Movies', fetchPopularMovies: true),
+        _buildCategorySection(context, 'Top Rated Movies', fetchTopRatedMovies: true),
+        _buildCategorySection(context, 'Upcoming Movies', fetchUpcomingMovies: true),
+        _buildCategorySection(context, 'Popular TV Shows', fetchPopularTVShows: true),
+        _buildCategorySection(context, 'Top Rated TV Shows', fetchTopRatedTVShows: true),
+        _buildCategorySection(context, 'Airing TV Series', fetchOnTheAirTVShows: true),
         ],
       ),
     );
@@ -199,118 +201,128 @@ class HomeScreen extends StatelessWidget {
   }
 
   // Category Section Widget
-  Widget _buildCategorySection(BuildContext context, String title, {bool fetchPopularMovies = false, bool fetchTopRatedMovies = false, bool fetchPopularTVShows = false, bool fetchTopRatedTVShows = false}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Text(
-            title,
-            style: TextStyle(
-              fontSize: 22, 
-              fontWeight: FontWeight.bold, 
-              color: Colors.white
-            ),
+ Widget _buildCategorySection(BuildContext context, String title,
+    {bool fetchPopularMovies = false,
+    bool fetchTopRatedMovies = false,
+    bool fetchUpcomingMovies = false,
+    bool fetchPopularTVShows = false,
+    bool fetchTopRatedTVShows = false,
+    bool fetchOnTheAirTVShows = false}) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Text(
+          title,
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
           ),
         ),
-        SizedBox(
-          height: 250,
-          child: FutureBuilder<List<dynamic>>(
-            future: fetchPopularMovies
-                ? _tmdbApiService.fetchPopularMovies()
-                : fetchTopRatedMovies
-                    ? _tmdbApiService.fetchTopRatedMovies()
-                    : fetchPopularTVShows
-                        ? _tmdbApiService.fetchPopularTVShows()
-                        : _tmdbApiService.fetchTopRatedTVShows(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(
-                  child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
-                  ),
-                );
-              } else if (snapshot.hasError) {
-                return Center(
-                  child: Text(
-                    'Error loading $title', 
-                    style: TextStyle(color: Colors.white),
-                  ),
-                );
-              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return Center(
-                  child: Text(
-                    'No $title available', 
-                    style: TextStyle(color: Colors.white),
-                  ),
-                );
-              }
+      ),
+      SizedBox(
+        height: 250,
+        child: FutureBuilder<List<dynamic>>(
+          future: fetchPopularMovies
+              ? _tmdbApiService.fetchPopularMovies()
+              : fetchTopRatedMovies
+                  ? _tmdbApiService.fetchTopRatedMovies()
+                  : fetchUpcomingMovies
+                      ? _tmdbApiService.fetchUpcomingMovies()
+                      : fetchPopularTVShows
+                          ? _tmdbApiService.fetchPopularTVShows()
+                          : fetchTopRatedTVShows
+                              ? _tmdbApiService.fetchTopRatedTVShows()
+                              : _tmdbApiService.fetchOnTheAirTVSeries(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
+                ),
+              );
+            } else if (snapshot.hasError) {
+              return Center(
+                child: Text(
+                  'Error loading $title',
+                  style: TextStyle(color: Colors.white),
+                ),
+              );
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return Center(
+                child: Text(
+                  'No $title available',
+                  style: TextStyle(color: Colors.white),
+                ),
+              );
+            }
 
-              final items = snapshot.data!;
-              final isMovie = fetchPopularMovies || fetchTopRatedMovies;
+            final items = snapshot.data!;
+            final isMovie = fetchPopularMovies || fetchTopRatedMovies || fetchUpcomingMovies;
 
-              return ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: items.length,
-                itemBuilder: (context, index) {
-                  final item = items[index];
-                  
-                  return GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => MovieDetailsScreen(
-                            id: item['id'],
-                            isMovie: isMovie,
+            return ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: items.length,
+              itemBuilder: (context, index) {
+                final item = items[index];
+
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MovieDetailsScreen(
+                          id: item['id'],
+                          isMovie: isMovie,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    width: 150,
+                    margin: EdgeInsets.symmetric(horizontal: 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.network(
+                            'https://image.tmdb.org/t/p/w200${item['poster_path']}',
+                            width: 150,
+                            height: 200,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Center(
+                                child: CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
+                                ),
+                              );
+                            },
                           ),
                         ),
-                      );
-                    },
-                    child: Container(
-                      width: 150,
-                      margin: EdgeInsets.symmetric(horizontal: 8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: Image.network(
-                              'https://image.tmdb.org/t/p/w200${item['poster_path']}',
-                              width: 150,
-                              height: 200,
-                              fit: BoxFit.cover,
-                              loadingBuilder: (context, child, loadingProgress) {
-                                if (loadingProgress == null) return child;
-                                return Center(
-                                  child: CircularProgressIndicator(
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
-                                  ),
-                                );
-                              },
-                            ),
+                        SizedBox(height: 8),
+                        Text(
+                          item['title'] ?? item['name'],
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.white,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          SizedBox(height: 8),
-                          Text(
-                            item['title'] ?? item['name'],
-                            style: TextStyle(
-                              fontSize: 14, 
-                              color: Colors.white,
-                              overflow: TextOverflow.ellipsis
-                            ),
-                            maxLines: 1,
-                          ),
-                        ],
-                      ),
+                          maxLines: 1,
+                        ),
+                      ],
                     ),
-                  );
-                },
-              );
-            },
-          ),
+                  ),
+                );
+              },
+            );
+          },
         ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
+}
 }

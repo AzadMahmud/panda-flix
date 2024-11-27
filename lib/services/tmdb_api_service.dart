@@ -74,4 +74,20 @@ class TMDBApiService {
       throw Exception('Failed to load trending items');
     }
   }
+
+  Future<List<dynamic>> fetchUpcomingMovies() async {
+    // Add your API call for upcoming movies
+    final response = await http.get(Uri.parse('https://api.themoviedb.org/3/movie/upcoming?api_key=$_apiKey'));
+    final data = jsonDecode(response.body);
+    return data['results'];
+  }
+
+  Future<List<dynamic>> fetchOnTheAirTVSeries() async {
+    // Add your API call for on-the-air TV series
+    final response = await http.get(Uri.parse('https://api.themoviedb.org/3/tv/on_the_air?api_key=$_apiKey'));
+    final data = jsonDecode(response.body);
+    return data['results'];
+  }
+
+
 }
